@@ -1,0 +1,325 @@
+---
+title: 'Chesapeake Bay Project'
+author: "*Compiled on `r date()` by `r Sys.info()['user']`*"
+output: 
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_depth: 3
+    toc_float: yes
+    number_sections: true
+    theme: cerulean
+    highlight: haddock
+  pdf_document:
+    toc: true
+---
+
+``` {r setup, echo = TRUE, message = FALSE, warning = FALSE}
+
+knitr::opts_chunk$set(fig.width = 6, fig.height = 4, fig.path = 'Figs/',
+                      echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(RColorBrewer)
+library(stringr)
+
+### Set up some options
+options(stringsAsFactors = FALSE) ### Ensure strings come in as character types
+
+### generic theme for all plots
+ggtheme_plot <- function(base_size = 9) {
+  theme(axis.ticks = element_blank(),
+               text             = element_text(family = 'Helvetica', color = 'gray30', size = base_size),
+               plot.title       = element_text(size = rel(1.25), hjust = 0, face = 'bold'),
+               panel.background = element_blank(),
+               legend.position  = 'right',
+               panel.border     = element_blank(),
+               panel.grid.minor = element_blank(),
+               panel.grid.major = element_line(colour = 'grey90', size = .25),
+               # panel.grid.major = element_blank(),
+               legend.key       = element_rect(colour = NA, fill = NA),
+               axis.line        = element_blank()) # element_line(colour = "grey30", size = .5))
+}
+
+```
+
+# Chesapeake Bay Project API
+
+Main data access page: http://www.chesapeakebay.net/data/
+
+API notes: http://data.chesapeakebay.net/API
+
+## Water Quality
+
+* Namespace
+    * http://datahub.chesapeakebay.net/api.{format}/WaterQuality/
+* Programs WaterQuality/Programs
+* Projects WaterQuality/Projects
+* Geographical Attributes List
+    * `HUC8` datahub.chesapeakebay.net/api.json/HUC8
+    * `HUC12` datahub.chesapeakebay.net/api.csv/HUC12
+    * `FIPS` datahub.chesapeakebay.net/api.csv/FIPS
+        * "County/City (FIPS) - the Federal Information Processing System (FIPS) assigns 5-digit codes to all counties and incorporated cities in the United States. The first two digits correspond to the state and the last three to the county or incorporated city within that state."
+        * Get a FIPS list for the area around Chesapeake Bay
+        * API doesn't seem to work for FIPS...
+    * `CBSeg2003` datahub.chesapeakebay.net/api.json/CBSeg2003
+    * `SegmentShed2009` datahub.chesapeakebay.net/api.json/SegmentShed2009
+    * `Station` datahub.chesapeakebay.net/api.json/Station
+
+### FIPS codes for Virginia, Maryland, Delaware, and DC
+
+``` {r get_fips}
+
+fips_df <- read_csv('https://transition.fcc.gov/oet/info/maps/census/fips/fips.txt', 
+              skip = 16, col_names = FALSE) %>%
+  setNames('raw') %>%
+  mutate(raw = str_trim(raw)) %>%
+  separate(raw, into = c('fips_id', 'place_name'), sep = '[ ]{3,}') %>%
+  mutate(fips_id = as.integer(fips_id)) %>%
+  filter(!is.na(fips_id))
+
+states_of_interest <- c('VIRGINIA', 'MARYLAND', 'DISTRICT OF COLUMBIA', 'DELAWARE')
+
+fips_states <- fips_df %>%
+  filter(fips_id < 100) %>%
+  filter(place_name %in% states_of_interest) %>%
+  rename(state = place_name, state_id = fips_id)
+
+fips_chesapeake <- fips_df %>%
+  filter(fips_id >= 1000) %>%
+  mutate(state_id = floor(fips_id / 1000)) %>%
+  filter(state_id %in% fips_states$state_id) %>%
+  left_join(fips_states, by = 'state_id') %>%
+  select(-state_id)
+
+write_csv(fips_chesapeake, 'data/fips_chesapeake.csv')
+
+DT::datatable(fips_chesapeake)
+```
+
+<!--
+### Station
+
+* Endpoint
+    * Station/<Geographical-Attribute>/<Attribute-Id>
+* Request
+    * `Geographical-Attribute`
+    * `Attribute-Id`
+* Example EndPoint
+    * http://datahub.chesapeakebay.net/api.CSV/WaterQuality/Station/HUC8/3
+
+### Monitoring Event
+
+* Endpoint
+    * MonitorEvent/<Start-Date>/<End-Date>/<Program-Id>/<Project-Id>/<Geographical-Attribute>/<Attribute-Id>
+* Request
+    * `Start-Date`
+    * `End-Date`
+    * `Program-Id`
+    * `Project-Id`
+    * `Geographical-Attribute`
+    * `Attribute-Id`
+* Example EndPoint
+    * http://datahub.chesapeakebay.net/api.csv/WaterQuality/MonitorEvent/6-29-2010/6-29-2015/2/12/HUC8/20
+        
+        
+### Light Attenuation
+
+* Endpoint
+    * LightAttenuation/<Start-Date>/<End-Date>/<Program-Id>/<Project-Id>/<Geographical-Attribute>/<Attribute-Id>
+* Request
+    * `Start-Date`
+    * `End-Date`
+    * `Program-Id`
+    * `Project-Id`
+    * `Geographical-Attribute`
+    * `Attribute-Id`
+* Example EndPoint
+    * http://datahub.chesapeakebay.net/api.csv/WaterQuality/LightAttenuation/6-29-2010/6-29-2015/2/12/HUC8/23
+
+### Optical Density
+
+* Endpoint
+    * OpticalDensity/<Start-Date>/<End-Date>/<Program-Id>/<Project-Id>/<Geographical-Attribute>/<Attribute-Id>
+* Request
+    * `Start-Date`
+    * `End-Date`
+    * `Program-Id`
+    * `Project-Id`
+    * `Geographical-Attribute`
+    * `Attribute-Id` for geographical attribute
+* Example EndPoint
+    * http://datahub.chesapeakebay.net/api.csv/WaterQuality/OpticalDensity/6-29-2010/6-29-2015/2/12/HUC8/23
+
+### Water Quality
+
+* Endpoint
+    * WaterQuality/<Start-Date>/<End-Date>/<Program-Id>/<Project-Id>/<Geographical-Attribute>/<Attribute-Id>/<Substance-Id>
+* Request
+    * Start-Date
+    * End-Date
+    * Program-Id
+    * Project-Id
+    * Geographical-Attribute
+    * Attribute-Id
+    * Substance-Id
+* Example EndPoint
+    * http://datahub.chesapeakebay.net/api.csv/WaterQuality/WaterQuality/6-29-2010/6-29-2015/2/12/FIPS/51059/23
+    
+Substance IDs?
+-->
+
+<!--
+Here is the call to get all water quality data for all FIPS locations between 1-1-07 and 6-3-17:
+
+http://data.chesapeakebay.net/api.CSV/WaterQuality/WaterQuality/1-1-2007/6-3-2017/2,4,6/12,13,14,15,2,3,11,7,23,24,16/FIPS/1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,30,32,33,45,46,50,52,53,59,60,62,63,67,72,73,74,75,77,78,79,80,83,91,92,93,95,96,98,100,105,106,108,111,112,113,114,115,117,120,121,122,123,124,126,127,128,129,130,131,132,135,136,137,140,141,142,148,149,151,153,154,155,156,157,158,159,160,161,162,165,170,171,173,178,179,180,181,182,183,186,187,190,192,194,195,197/21,23,31,33,34,51,54,61,64,73,78,80,83,94,95,99,100,108,109,110,114,116,119,123,5,12,15,26,27,30,35,36,41,44,46,55,60,63,65,67,70,71,74,76,77,82,84,85,87,88,93,103,104,105,111,121,124,163,43,45,79,96,97,98,106,16,17,49,75,66,68,40,89,164,69,92,81,107
+
+* program_id = 2,4,6
+* project_id = 12,13,14,15,2,3,11,7,23,24,16
+* FIPS attribute_id = 1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,30,32,33,45,46,50,52,53,59,60,62,63,67,72,73,74,75,77,78,79,80,83,91,92,93,95,96,98,100,105,106,108,111,112,113,114,115,117,120,121,122,123,124,126,127,128,129,130,131,132,135,136,137,140,141,142,148,149,151,153,154,155,156,157,158,159,160,161,162,165,170,171,173,178,179,180,181,182,183,186,187,190,192,194,195,197
+* substance_id = 21,23,31,33,34,51,54,61,64,73,78,80,83,94,95,99,100,108,109,110,114,116,119,123,5,12,15,26,27,30,35,36,41,44,46,55,60,63,65,67,70,71,74,76,77,82,84,85,87,88,93,103,104,105,111,121,124,163,43,45,79,96,97,98,106,16,17,49,75,66,68,40,89,164,69,92,81,107
+
+Parse this out into codes for FIPS IDs and substance IDs
+-->
+
+``` {r get_dataset}
+
+fips_check <- c('dc'               = 11001, 
+                'fairfax county'   = 51059, 
+                'fairfax city'     = 51600,
+                'arlington county' = 51013)
+# x <- read_csv('data/water_qual_download_small.csv')
+x <- read_csv('data/water_qual_download_large.csv') %>%
+  filter(FIPS %in% fips_check)
+
+write_csv(x, 'data/water_qual_local.csv')
+
+# names(x)
+#  [1] "FIPS"                "EventId"             "Cruise"              "Program"            
+#  [5] "Project"             "Agency"              "Source"              "Station"            
+#  [9] "SampleDate"          "SampleTime"          "TotalDepth"          "UpperPycnocline"    
+# [13] "LowerPycnocline"     "Depth"               "Layer"               "SampleType"         
+# [17] "SampleReplicateType" "Parameter"           "Qualifier"           "MeasureValue"       
+# [21] "Unit"                "Method"              "Lab"                 "Problem"            
+# [25] "PrecisionPC"         "BiasPC"              "Details"             "Latitude"           
+# [29] "Longitude"
+
+# x$Parameter %>% unique()
+
+#  [1] "BOD5W"     "CHLA"      "CLW"       "DIN"       "DO"        "DOC"       "DON"      
+#  [8] "DOP"       "FCOLI_M"   "FLOW_INS"  "HARDNESS"  "KD"        "NH4F"      "NO23F"    
+# [15] "NO2F"      "NO3F"      "PC"        "PH"        "PHEO"      "PIP"       "PN"       
+# [22] "PO4F"      "PP"        "SALINITY"  "SECCHI"    "SIF"       "SIGMA_T"   "SO4W"     
+# [29] "SPCOND"    "SSC_%FINE" "SSC_TOTAL" "TALK"      "TCOLI_M"   "TDN"       "TDP"      
+# [36] "TN"        "TON"       "TP"        "TSS"       "TURB_FNU"  "TURB_NTU"  "VSS"      
+# [43] "WTEMP"     "FSS"       "PIC"       "POC"       "TDS"       "TKNW"      "TOC"      
+# [50] "TURB_NTRU" "FCOLI_C"   "NH4W"      "NO23W"     "NO2W"      "NO3W"      "PO4W"     
+# [57] "SSC_FINE"  "SSC_SAND" 
+
+y <- x %>%
+  group_by(Parameter) %>%
+  filter(n() > 500) %>%
+  ungroup()
+
+y$Parameter %>% table()
+    # BOD5W      CHLA       DIN        DO       DON       DOP   FCOLI_M  HARDNESS 
+    #  1481      3216       691      6037       633       609      1522      2006 
+    #  NH4F     NO23F      NO2F      NO3F        PC        PH        PN      PO4F 
+    #  2088       609      2165       572       576      5942       551       861 
+    #    PP  SALINITY    SECCHI   SIGMA_T    SPCOND SSC_TOTAL      TALK       TDN 
+    #   577      2331      1462      2286      6342       682      1681       536 
+    #   TDP      TKNW        TN        TP       TSS  TURB_NTU     WTEMP 
+    #   577       618      1037       992      2376      3458      6311 
+```
+
+Some helpful documentation on translating parameter codes: http://www.chesapeakebay.net/documents/3676/cbwqdb2004_rb.pdf
+
+``` {r get_params}
+
+params_to_keep <- c("WHOLE 5-DAY BIOCHEMICAL OXYGEN DEMAND MG/L", 
+  "ACTIVE CHLOROPHYLL-A UG/L", 
+  "DISSOLVED OXYGEN IN MG/L MG/L", 
+  "TOTAL DISSOLVED NITROGEN MG/L", 
+  "TOTAL DISSOLVED PHOSPHORUS MG/L", 
+  "HARDNESS AS CACO3 MG/L", 
+  "TOTAL ALKALINITY AS CACO3 MG/L", 
+  "PH CORRECTED FOR TEMPERATURE (25 DEG C) SU", 
+  "SALINITY UNITS IN PPT AND EQUAL TO PRACTICAL SALNITY UNITS (PSU) PPT", 
+  "AMMONIUM NITROGEN AS N (FILTERED SAMPLE) MG/L", 
+  "NITRITE+NITRATE NITROGEN AS N (FILTERED SAMPLE) MG/L", 
+  "NITRITE NITROGEN AS N (FILTERED SAMPLE) MG/L", 
+  "NITRATE NITROGEN AS N (FILTERED SAMPLE) MG/L", 
+  "SECCHI DEPTH M", 
+  "TOTAL SUSPENDED SOLIDS MG/L", 
+  "TURBIDITY; NEPHELOMETRIC METHOD NTU", 
+  "WATER TEMPERATURE DEG C")
+
+param_df <- read_csv('data/param_lookup.txt', col_names = FALSE) %>%
+  .$X1 %>%
+  str_split_fixed(' ', 2) %>%
+  as.data.frame() %>%
+  setNames(c('param', 'param_desc')) %>%
+  filter(param_desc %in% params_to_keep) %>%
+  mutate(param_desc = factor(param_desc, ordered = TRUE))
+
+z <- y %>%
+  inner_join(param_df, by = c('Parameter' = 'param')) %>%
+  select(FIPS, EventId, Program, Project, Station, SampleDate, 
+         SampleTime, TotalDepth, Depth, Layer, 
+         Parameter, MeasureValue, Unit, Details, 
+         Latitude, Longitude, param_desc) %>%
+  mutate(SampleDate = as.Date(SampleDate, format = '%m/%d/%Y')) %>%
+  distinct() %>%
+  left_join(fips_df, by = c('FIPS' = 'fips_id'))
+
+```
+
+### Parameter list for Fairfax/Arlington/DC area
+
+All the parameters in this area:
+
+* "WHOLE 5-DAY BIOCHEMICAL OXYGEN DEMAND MG/L"                          
+"ACTIVE CHLOROPHYLL-A UG/L"                                           
+"DISSOLVED INORGANIC NITROGEN MG/L"                                   
+"DISSOLVED OXYGEN IN MG/L MG/L"                                       
+"DISSOLVED ORGANIC NITROGEN MG/L"                                     
+"DISSOLVED ORGANIC PHOSPHORUS MG/L"                                   
+"HARDNESS AS CACO3 MG/L"                                              
+"AMMONIUM NITROGEN AS N (FILTERED SAMPLE) MG/L"                       
+"NITRITE+NITRATE NITROGEN AS N (FILTERED SAMPLE) MG/L"                
+"NITRITE NITROGEN AS N (FILTERED SAMPLE) MG/L"                        
+"NITRATE NITROGEN AS N (FILTERED SAMPLE) MG/L"                        
+"PARTICULATE CARBON MG/L"                                             
+"PH CORRECTED FOR TEMPERATURE (25 DEG C) SU"                          
+"SALINITY UNITS IN PPT AND EQUAL TO PRACTICAL SALNITY UNITS (PSU) PPT"
+"SECCHI DEPTH M"                                                      
+"TOTAL ALKALINITY AS CACO3 MG/L"                                      
+"TOTAL DISSOLVED NITROGEN MG/L"                                       
+"TOTAL DISSOLVED PHOSPHORUS MG/L"                                     
+"TOTAL SUSPENDED SOLIDS MG/L"                                         
+"TURBIDITY; NEPHELOMETRIC METHOD NTU"                                 
+"WATER TEMPERATURE DEG C"                                             
+
+# Plots of parameters over time
+
+``` {r plot_plots}
+
+params <- z$param_desc %>% unique()
+
+for (param in params) {
+  ### param <- params[1]
+  tmp <- z %>%
+    filter(param_desc == param)
+  
+  plot_units <- tmp$Unit[!is.na(tmp$Unit)][1]
+  plot_param_short  <- tmp$Parameter[1]
+  
+  param_plot <- ggplot(tmp, aes(x = SampleDate, y = MeasureValue, color = place_name)) +
+    geom_point() +
+    labs(title = tools::toTitleCase(param),
+         y = paste0(plot_param_short, ' (', plot_units, ')'),
+         x = 'sample date')
+  
+  print(param_plot)
+}
+```

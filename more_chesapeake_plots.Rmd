@@ -93,7 +93,7 @@ for (param in params) {
     
     print(param_plot)
   }
-  cat(sprintf('%s vs Temp:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
+  cat(sprintf('<br>%s vs Temp:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
 }
 ```
 
@@ -144,7 +144,7 @@ for (param in params) {
     
     print(param_plot)
   }
-  cat(sprintf('%s vs Dissolved Oxygen:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
+  cat(sprintf('<br>%s vs Dissolved Oxygen:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
 
 }
 ```
@@ -197,7 +197,7 @@ for (param in params) {
     
     print(param_plot)
   }
-  cat(sprintf('%s vs Dissolved Nitrogen:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
+  cat(sprintf('<br>%s vs Dissolved Nitrogen:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
 
 }
 ```
@@ -251,7 +251,7 @@ for (param in params) {
     
     print(param_plot)
   }
-  cat(sprintf('%s vs Dissolved Phosphorus:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
+  cat(sprintf('<br>%s vs Dissolved Phosphorus:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
 
 }
 ```
@@ -305,7 +305,7 @@ for (param in params) {
     
     print(param_plot)
   }
-  cat(sprintf('%s vs Turbidity:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
+  cat(sprintf('<br>%s vs Turbidity:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
 
 }
 ```

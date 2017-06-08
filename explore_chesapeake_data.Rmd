@@ -188,11 +188,13 @@ fips_check <- c('dc'               = 11001,
                 'fairfax county'   = 51059, 
                 'fairfax city'     = 51600,
                 'arlington county' = 51013)
-# x <- read_csv('data/water_qual_download_small.csv')
-x <- read_csv('data/water_qual_download_large.csv') %>%
-  filter(FIPS %in% fips_check)
 
-write_csv(x, 'data/water_qual_local.csv')
+# x <- read_csv('data/water_qual_download_large.csv') %>%
+#   filter(FIPS %in% fips_check)
+# 
+# write_csv(x, 'data/water_qual_local.csv')
+
+x <- read_csv('data/water_qual_local.csv')
 
 # names(x)
 #  [1] "FIPS"                "EventId"             "Cruise"              "Program"            
@@ -236,6 +238,13 @@ Some helpful documentation on translating parameter codes: http://www.chesapeake
 
 ``` {r get_params}
 
+x <- read_csv('data/water_qual_local.csv')
+
+y <- x %>%
+  group_by(Parameter) %>%
+  filter(n() > 500) %>%
+  ungroup()
+
 params_to_keep <- c("WHOLE 5-DAY BIOCHEMICAL OXYGEN DEMAND MG/L", 
   "ACTIVE CHLOROPHYLL-A UG/L", 
   "DISSOLVED OXYGEN IN MG/L MG/L", 
@@ -272,6 +281,7 @@ z <- y %>%
   distinct() %>%
   left_join(fips_df, by = c('FIPS' = 'fips_id'))
 
+write_csv(z, 'data/water_qual_student.csv')
 ```
 
 ### Parameter list for Fairfax/Arlington/DC area
@@ -300,9 +310,11 @@ All the parameters in this area:
 "TURBIDITY; NEPHELOMETRIC METHOD NTU"                                 
 "WATER TEMPERATURE DEG C"                                             
 
-# Plots of parameters over time
+# Plots of parameters vs time
 
-``` {r plot_plots}
+``` {r plot_plots_vs_time}
+
+z <- read_csv('data/water_qual_student.csv')
 
 params <- z$param_desc %>% unique()
 
@@ -315,7 +327,7 @@ for (param in params) {
   plot_param_short  <- tmp$Parameter[1]
   
   param_plot <- ggplot(tmp, aes(x = SampleDate, y = MeasureValue, color = place_name)) +
-    geom_point() +
+    geom_point(alpha = .5) +
     labs(title = tools::toTitleCase(param),
          y = paste0(plot_param_short, ' (', plot_units, ')'),
          x = 'sample date')
@@ -323,3 +335,5 @@ for (param in params) {
   print(param_plot)
 }
 ```
+
+

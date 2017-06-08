@@ -1,0 +1,311 @@
+---
+title: 'Chesapeake Bay Project - more plots plz'
+author: "*Compiled on `r date()` by `r Sys.info()['user']`*"
+output: 
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_depth: 3
+    toc_float: yes
+    number_sections: true
+    theme: cerulean
+    highlight: haddock
+  pdf_document:
+    toc: true
+---
+
+``` {r setup, echo = TRUE, message = FALSE, warning = FALSE}
+
+knitr::opts_chunk$set(fig.width = 6, fig.height = 4, fig.path = 'Figs/',
+                      echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(RColorBrewer)
+library(stringr)
+
+### Set up some options
+options(stringsAsFactors = FALSE) ### Ensure strings come in as character types
+
+### generic theme for all plots
+ggtheme_plot <- function(base_size = 9) {
+  theme(axis.ticks = element_blank(),
+               text             = element_text(family = 'Helvetica', color = 'gray30', size = base_size),
+               plot.title       = element_text(size = rel(1.25), hjust = 0, face = 'bold'),
+               panel.background = element_blank(),
+               legend.position  = 'right',
+               panel.border     = element_blank(),
+               panel.grid.minor = element_blank(),
+               panel.grid.major = element_line(colour = 'grey90', size = .25),
+               # panel.grid.major = element_blank(),
+               legend.key       = element_rect(colour = NA, fill = NA),
+               axis.line        = element_blank()) # element_line(colour = "grey30", size = .5))
+}
+
+```
+
+# Plot a few parameters against each other
+
+## Parameters vs temperature
+
+``` {r plot_plots_vs_temp}
+
+z <- read_csv('data/water_qual_student.csv')
+
+R_thresh <- .1
+
+temp_df <- z %>%
+  filter(param_desc == 'WATER TEMPERATURE DEG C') %>%
+  filter(!is.na(MeasureValue)) %>%
+  group_by(SampleDate) %>%
+  summarize(temp = mean(MeasureValue))
+
+params <- z$param_desc %>% unique() %>%
+  .[!str_detect(., 'WATER TEMPERATURE DEG C')]
+
+for (param in params) {
+  ### param <- params[1]
+  tmp <- z %>%
+    filter(param_desc %in% param) %>%
+    inner_join(temp_df, by = 'SampleDate') %>%
+    select(FIPS, place_name, EventId, SampleDate, param_desc, MeasureValue, temp, Unit) %>%
+    distinct() %>%
+    arrange(SampleDate)
+  
+  if(nrow(tmp) > 500) {
+    tmp <- tmp %>%
+      filter(MeasureValue < quantile(MeasureValue, .995, na.rm = TRUE))
+  }
+  
+  mdl_R <- lm(MeasureValue ~ temp, data = tmp) %>%
+    summary()
+  
+  message(param, ' vs Temp, R^2 = ', mdl_R$adj.r.squared)
+  
+  if(mdl_R$adj.r.squared > R_thresh) {
+    plot_units <- tmp$Unit[!is.na(tmp$Unit)][1]
+    plot_param_short  <- tmp$Parameter[1]
+    
+    param_plot <- ggplot(tmp, aes(x = temp, y = MeasureValue)) +
+      geom_point(aes(color = place_name), alpha = .5) +
+      stat_smooth(method = 'lm', color = 'grey20', size = .5) +
+      labs(title = tools::toTitleCase(param),
+           y = paste0(plot_param_short, ' (', plot_units, ')'),
+           x = 'Temperature (°C)')
+    
+    print(param_plot)
+  }
+}
+```
+
+## Parameters vs oxygen
+
+``` {r plot_plots_vs_o2}
+
+z <- read_csv('data/water_qual_student.csv')
+
+R_thresh <- .1
+
+o2_df <- z %>%
+  filter(param_desc == 'DISSOLVED OXYGEN IN MG/L MG/L') %>%
+  filter(!is.na(MeasureValue)) %>%
+  group_by(SampleDate) %>%
+  summarize(o2 = mean(MeasureValue))
+
+params <- z$param_desc %>% unique() %>%
+  .[!str_detect(., 'DISSOLVED OXYGEN')]
+
+for (param in params) {
+  ### param <- params[1]
+  tmp <- z %>%
+    filter(param_desc %in% param) %>%
+    inner_join(o2_df, by = 'SampleDate') %>%
+    select(FIPS, place_name, EventId, SampleDate, param_desc, MeasureValue, o2, Unit) %>%
+    distinct() %>%
+    arrange(SampleDate)
+  
+  if(nrow(tmp) > 500) {
+    tmp <- tmp %>%
+      filter(MeasureValue < quantile(MeasureValue, .995, na.rm = TRUE))
+  }
+  
+  mdl_R <- lm(MeasureValue ~ o2, data = tmp) %>%
+    summary()
+  
+  message(param, ' vs O2, R^2 = ', mdl_R$adj.r.squared)
+  
+  if(mdl_R$adj.r.squared > R_thresh) {
+    plot_units <- tmp$Unit[!is.na(tmp$Unit)][1]
+    plot_param_short  <- tmp$Parameter[1]
+    
+    param_plot <- ggplot(tmp, aes(x = o2, y = MeasureValue)) +
+      geom_point(aes(color = place_name), alpha = .5) +
+      stat_smooth(method = 'lm', color = 'grey20', size = .5) +
+      labs(title = tools::toTitleCase(param),
+           y = paste0(plot_param_short, ' (', plot_units, ')'),
+           x = 'Dissolved Oxygen (mg/L)')
+    
+    print(param_plot)
+  }
+}
+```
+
+## Parameters vs nitrogen
+
+``` {r plot_plots_vs_n2}
+
+z <- read_csv('data/water_qual_student.csv')
+
+R_thresh <- .1
+
+n2_df <- z %>%
+  filter(str_detect(param_desc, 'DISSOLVED NITROGEN')) %>%
+  filter(!is.na(MeasureValue)) %>%
+  group_by(SampleDate) %>%
+  summarize(n2 = mean(MeasureValue))
+
+params <- z$param_desc %>% unique() %>%
+  .[!str_detect(., 'DISSOLVED NITROGEN')]
+
+for (param in params) {
+  ### param <- params[1]
+  tmp <- z %>%
+    filter(param_desc %in% param) %>%
+    inner_join(n2_df, by = 'SampleDate') %>%
+    select(FIPS, place_name, EventId, SampleDate, param_desc, MeasureValue, n2, Unit) %>%
+    distinct() %>%
+    arrange(SampleDate)
+  
+  if(nrow(tmp) > 500) {
+    tmp <- tmp %>%
+      filter(MeasureValue < quantile(MeasureValue, .995, na.rm = TRUE))
+  }
+  
+  mdl_R <- lm(MeasureValue ~ n2, data = tmp) %>%
+    summary()
+  
+  message(param, ' vs Nitrogen, R^2 = ', mdl_R$adj.r.squared)
+  
+  if(mdl_R$adj.r.squared > R_thresh) {
+
+    plot_units <- tmp$Unit[!is.na(tmp$Unit)][1]
+    plot_param_short  <- tmp$Parameter[1]
+    
+    param_plot <- ggplot(tmp, aes(x = n2, y = MeasureValue)) +
+      geom_point(aes(color = place_name), alpha = .5) +
+      stat_smooth(method = 'lm', color = 'grey20', size = .5) +
+      labs(title = tools::toTitleCase(param),
+           y = paste0(plot_param_short, ' (', plot_units, ')'),
+           x = 'Dissolved Nitrogen (mg/L)')
+    
+    print(param_plot)
+  }
+}
+```
+
+## Parameters vs phosphorus
+
+``` {r plot_plots_vs_p}
+
+z <- read_csv('data/water_qual_student.csv')
+
+R_thresh <- .1
+
+p_df <- z %>%
+  filter(str_detect(param_desc, 'DISSOLVED PHOSPHORUS')) %>%
+  filter(!is.na(MeasureValue)) %>%
+  group_by(SampleDate) %>%
+  summarize(p = mean(MeasureValue)) %>%
+  filter(p < quantile(p, .99))
+
+params <- z$param_desc %>% unique() %>%
+  .[!str_detect(., 'DISSOLVED PHOSPHORUS')]
+
+for (param in params) {
+  ### param <- params[1]
+  tmp <- z %>%
+    filter(param_desc %in% param) %>%
+    inner_join(p_df, by = 'SampleDate') %>%
+    select(FIPS, place_name, EventId, SampleDate, param_desc, MeasureValue, p, Unit) %>%
+    distinct() %>%
+    arrange(SampleDate)
+  
+  if(nrow(tmp) > 500) {
+    tmp <- tmp %>%
+      filter(MeasureValue < quantile(MeasureValue, .995, na.rm = TRUE))
+  }
+  
+  mdl_R <- lm(MeasureValue ~ p, data = tmp) %>%
+    summary()
+  
+  message(param, ' vs Phosphorus, R^2 = ', mdl_R$adj.r.squared)
+  
+  if(mdl_R$adj.r.squared > R_thresh) {
+  
+    plot_units <- tmp$Unit[!is.na(tmp$Unit)][1]
+    plot_param_short  <- tmp$Parameter[1]
+    
+    param_plot <- ggplot(tmp, aes(x = p, y = MeasureValue)) +
+      geom_point(aes(color = place_name), alpha = .5) +
+      stat_smooth(method = 'lm', color = 'grey20', size = .5) +
+      labs(title = tools::toTitleCase(param),
+           y = paste0(plot_param_short, ' (', plot_units, ')'),
+           x = 'Dissolved Phosphorus (mg/L)')
+    
+    print(param_plot)
+  }
+}
+```
+
+## Parameters vs turbidity
+
+``` {r plot_plots_vs_turb}
+
+z <- read_csv('data/water_qual_student.csv')
+
+R_thresh <- .1
+
+turb_df <- z %>%
+  filter(str_detect(param_desc, 'TURBIDITY')) %>%
+  filter(!is.na(MeasureValue)) %>%
+  group_by(SampleDate) %>%
+  summarize(turb = mean(MeasureValue)) %>%
+  filter(turb < quantile(turb, .99))
+
+params <- z$param_desc %>% unique() %>%
+  .[!str_detect(., 'TURBIDITY')]
+
+for (param in params) {
+  ### param <- params[1]
+  tmp <- z %>%
+    filter(param_desc %in% param) %>%
+    inner_join(turb_df, by = 'SampleDate') %>%
+    select(FIPS, place_name, EventId, SampleDate, param_desc, MeasureValue, turb, Unit) %>%
+    distinct() %>%
+    arrange(SampleDate)
+  
+  if(nrow(tmp) > 500) {
+    tmp <- tmp %>%
+      filter(MeasureValue < quantile(MeasureValue, .995, na.rm = TRUE))
+  }
+
+  mdl_R <- lm(MeasureValue ~ turb, data = tmp) %>%
+    summary()
+  
+  message(param, ' vs Turbidity, R^2 = ', mdl_R$adj.r.squared)
+  
+  if(mdl_R$adj.r.squared > R_thresh) {
+    
+    plot_units <- tmp$Unit[!is.na(tmp$Unit)][1]
+    plot_param_short  <- tmp$Parameter[1]
+    
+    param_plot <- ggplot(tmp, aes(x = turb, y = MeasureValue)) +
+      geom_point(aes(color = place_name), alpha = .5) +
+      stat_smooth(method = 'lm', color = 'grey20', size = .5) +
+      labs(title = tools::toTitleCase(param),
+           y = paste0(plot_param_short, ' (', plot_units, ')'),
+           x = 'Turbidity (NTU)')
+    
+    print(param_plot)
+  }
+}
+```

@@ -47,7 +47,7 @@ ggtheme_plot <- function(base_size = 9) {
 
 ## Parameters vs temperature
 
-``` {r plot_plots_vs_temp}
+``` {r plot_plots_vs_temp, results = 'asis'}
 
 z <- read_csv('data/water_qual_student.csv')
 
@@ -79,7 +79,6 @@ for (param in params) {
   mdl_R <- lm(MeasureValue ~ temp, data = tmp) %>%
     summary()
   
-  message(param, ' vs Temp, R^2 = ', mdl_R$adj.r.squared)
   
   if(mdl_R$adj.r.squared > R_thresh) {
     plot_units <- tmp$Unit[!is.na(tmp$Unit)][1]
@@ -94,12 +93,13 @@ for (param in params) {
     
     print(param_plot)
   }
+  cat(sprintf('%s vs Temp:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
 }
 ```
 
 ## Parameters vs oxygen
 
-``` {r plot_plots_vs_o2}
+``` {r plot_plots_vs_o2, results = 'asis'}
 
 z <- read_csv('data/water_qual_student.csv')
 
@@ -131,8 +131,6 @@ for (param in params) {
   mdl_R <- lm(MeasureValue ~ o2, data = tmp) %>%
     summary()
   
-  message(param, ' vs O2, R^2 = ', mdl_R$adj.r.squared)
-  
   if(mdl_R$adj.r.squared > R_thresh) {
     plot_units <- tmp$Unit[!is.na(tmp$Unit)][1]
     plot_param_short  <- tmp$Parameter[1]
@@ -146,12 +144,14 @@ for (param in params) {
     
     print(param_plot)
   }
+  cat(sprintf('%s vs Dissolved Oxygen:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
+
 }
 ```
 
 ## Parameters vs nitrogen
 
-``` {r plot_plots_vs_n2}
+``` {r plot_plots_vs_n2, results = 'asis'}
 
 z <- read_csv('data/water_qual_student.csv')
 
@@ -183,8 +183,6 @@ for (param in params) {
   mdl_R <- lm(MeasureValue ~ n2, data = tmp) %>%
     summary()
   
-  message(param, ' vs Nitrogen, R^2 = ', mdl_R$adj.r.squared)
-  
   if(mdl_R$adj.r.squared > R_thresh) {
 
     plot_units <- tmp$Unit[!is.na(tmp$Unit)][1]
@@ -199,12 +197,14 @@ for (param in params) {
     
     print(param_plot)
   }
+  cat(sprintf('%s vs Dissolved Nitrogen:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
+
 }
 ```
 
 ## Parameters vs phosphorus
 
-``` {r plot_plots_vs_p}
+``` {r plot_plots_vs_p, results = 'asis'}
 
 z <- read_csv('data/water_qual_student.csv')
 
@@ -237,8 +237,6 @@ for (param in params) {
   mdl_R <- lm(MeasureValue ~ p, data = tmp) %>%
     summary()
   
-  message(param, ' vs Phosphorus, R^2 = ', mdl_R$adj.r.squared)
-  
   if(mdl_R$adj.r.squared > R_thresh) {
   
     plot_units <- tmp$Unit[!is.na(tmp$Unit)][1]
@@ -253,12 +251,14 @@ for (param in params) {
     
     print(param_plot)
   }
+  cat(sprintf('%s vs Dissolved Phosphorus:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
+
 }
 ```
 
 ## Parameters vs turbidity
 
-``` {r plot_plots_vs_turb}
+``` {r plot_plots_vs_turb, results = 'asis'}
 
 z <- read_csv('data/water_qual_student.csv')
 
@@ -291,8 +291,6 @@ for (param in params) {
   mdl_R <- lm(MeasureValue ~ turb, data = tmp) %>%
     summary()
   
-  message(param, ' vs Turbidity, R^2 = ', mdl_R$adj.r.squared)
-  
   if(mdl_R$adj.r.squared > R_thresh) {
     
     plot_units <- tmp$Unit[!is.na(tmp$Unit)][1]
@@ -307,5 +305,7 @@ for (param in params) {
     
     print(param_plot)
   }
+  cat(sprintf('%s vs Turbidity:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
+
 }
 ```

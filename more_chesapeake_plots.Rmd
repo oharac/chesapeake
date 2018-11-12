@@ -2,6 +2,8 @@
 title: 'Chesapeake Bay Project - more plots plz'
 author: "*Compiled on `r date()` by `r Sys.info()['user']`*"
 output: 
+  pdf_document:
+    toc: true
   html_document:
     code_folding: hide
     toc: true
@@ -10,14 +12,12 @@ output:
     number_sections: true
     theme: cerulean
     highlight: haddock
-  pdf_document:
-    toc: true
 ---
 
-``` {r setup, echo = TRUE, message = FALSE, warning = FALSE}
+``` {r setup, echo = FALSE, message = FALSE, warning = FALSE}
 
 knitr::opts_chunk$set(fig.width = 6, fig.height = 4, fig.path = 'Figs/',
-                      echo = TRUE, message = FALSE, warning = FALSE)
+                      echo = FALSE, message = FALSE, warning = FALSE)
 
 library(tidyverse)
 library(RColorBrewer)
@@ -29,8 +29,11 @@ options(stringsAsFactors = FALSE) ### Ensure strings come in as character types
 ### generic theme for all plots
 ggtheme_plot <- function(base_size = 9) {
   theme(axis.ticks = element_blank(),
-               text             = element_text(family = 'Helvetica', color = 'gray30', size = base_size),
-               plot.title       = element_text(size = rel(1.25), hjust = 0, face = 'bold'),
+               text             = element_text(family = 'Helvetica', 
+                                               color = 'gray30', 
+                                               size = base_size),
+               plot.title       = element_text(size = rel(1.25), hjust = 0, 
+                                               face = 'bold'),
                panel.background = element_blank(),
                legend.position  = 'right',
                panel.border     = element_blank(),
@@ -38,7 +41,8 @@ ggtheme_plot <- function(base_size = 9) {
                panel.grid.major = element_line(colour = 'grey90', size = .25),
                # panel.grid.major = element_blank(),
                legend.key       = element_rect(colour = NA, fill = NA),
-               axis.line        = element_blank()) # element_line(colour = "grey30", size = .5))
+               axis.line        = element_blank()) 
+  # element_line(colour = "grey30", size = .5))
 }
 
 ```
@@ -67,7 +71,8 @@ for (param in params) {
   tmp <- z %>%
     filter(param_desc %in% param) %>%
     inner_join(temp_df, by = 'SampleDate') %>%
-    select(FIPS, place_name, EventId, SampleDate, param_desc, MeasureValue, temp, Unit) %>%
+    select(FIPS, place_name, EventId, SampleDate, 
+           param_desc, MeasureValue, temp, Unit) %>%
     distinct() %>%
     arrange(SampleDate)
   
@@ -85,6 +90,7 @@ for (param in params) {
     plot_param_short  <- tmp$Parameter[1]
     
     param_plot <- ggplot(tmp, aes(x = temp, y = MeasureValue)) +
+      ggtheme_plot() +
       geom_point(aes(color = place_name), alpha = .5) +
       stat_smooth(method = 'lm', color = 'grey20', size = .5) +
       labs(title = tools::toTitleCase(param),
@@ -93,7 +99,8 @@ for (param in params) {
     
     print(param_plot)
   }
-  cat(sprintf('<br>%s vs Temp:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
+  cat(sprintf('<br>%s vs Temp:<br>  R^2^ = %.4f<hr>', 
+              param, mdl_R$adj.r.squared))
 }
 ```
 
@@ -119,7 +126,8 @@ for (param in params) {
   tmp <- z %>%
     filter(param_desc %in% param) %>%
     inner_join(o2_df, by = 'SampleDate') %>%
-    select(FIPS, place_name, EventId, SampleDate, param_desc, MeasureValue, o2, Unit) %>%
+    select(FIPS, place_name, EventId, SampleDate, 
+           param_desc, MeasureValue, o2, Unit) %>%
     distinct() %>%
     arrange(SampleDate)
   
@@ -136,6 +144,7 @@ for (param in params) {
     plot_param_short  <- tmp$Parameter[1]
     
     param_plot <- ggplot(tmp, aes(x = o2, y = MeasureValue)) +
+      ggtheme_plot() +
       geom_point(aes(color = place_name), alpha = .5) +
       stat_smooth(method = 'lm', color = 'grey20', size = .5) +
       labs(title = tools::toTitleCase(param),
@@ -144,7 +153,8 @@ for (param in params) {
     
     print(param_plot)
   }
-  cat(sprintf('<br>%s vs Dissolved Oxygen:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
+  cat(sprintf('<br>%s vs Dissolved Oxygen:<br>  R^2^ = %.4f<hr>', 
+              param, mdl_R$adj.r.squared))
 
 }
 ```
@@ -171,7 +181,8 @@ for (param in params) {
   tmp <- z %>%
     filter(param_desc %in% param) %>%
     inner_join(n2_df, by = 'SampleDate') %>%
-    select(FIPS, place_name, EventId, SampleDate, param_desc, MeasureValue, n2, Unit) %>%
+    select(FIPS, place_name, EventId, SampleDate, 
+           param_desc, MeasureValue, n2, Unit) %>%
     distinct() %>%
     arrange(SampleDate)
   
@@ -189,6 +200,7 @@ for (param in params) {
     plot_param_short  <- tmp$Parameter[1]
     
     param_plot <- ggplot(tmp, aes(x = n2, y = MeasureValue)) +
+      ggtheme_plot() +
       geom_point(aes(color = place_name), alpha = .5) +
       stat_smooth(method = 'lm', color = 'grey20', size = .5) +
       labs(title = tools::toTitleCase(param),
@@ -197,7 +209,8 @@ for (param in params) {
     
     print(param_plot)
   }
-  cat(sprintf('<br>%s vs Dissolved Nitrogen:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
+  cat(sprintf('<br>%s vs Dissolved Nitrogen:<br>  R^2^ = %.4f<hr>', 
+              param, mdl_R$adj.r.squared))
 
 }
 ```
@@ -225,7 +238,8 @@ for (param in params) {
   tmp <- z %>%
     filter(param_desc %in% param) %>%
     inner_join(p_df, by = 'SampleDate') %>%
-    select(FIPS, place_name, EventId, SampleDate, param_desc, MeasureValue, p, Unit) %>%
+    select(FIPS, place_name, EventId, SampleDate, 
+           param_desc, MeasureValue, p, Unit) %>%
     distinct() %>%
     arrange(SampleDate)
   
@@ -243,6 +257,7 @@ for (param in params) {
     plot_param_short  <- tmp$Parameter[1]
     
     param_plot <- ggplot(tmp, aes(x = p, y = MeasureValue)) +
+      ggtheme_plot() +
       geom_point(aes(color = place_name), alpha = .5) +
       stat_smooth(method = 'lm', color = 'grey20', size = .5) +
       labs(title = tools::toTitleCase(param),
@@ -251,7 +266,8 @@ for (param in params) {
     
     print(param_plot)
   }
-  cat(sprintf('<br>%s vs Dissolved Phosphorus:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
+  cat(sprintf('<br>%s vs Dissolved Phosphorus:<br>  R^2^ = %.4f<hr>', 
+              param, mdl_R$adj.r.squared))
 
 }
 ```
@@ -279,7 +295,8 @@ for (param in params) {
   tmp <- z %>%
     filter(param_desc %in% param) %>%
     inner_join(turb_df, by = 'SampleDate') %>%
-    select(FIPS, place_name, EventId, SampleDate, param_desc, MeasureValue, turb, Unit) %>%
+    select(FIPS, place_name, EventId, SampleDate, 
+           param_desc, MeasureValue, turb, Unit) %>%
     distinct() %>%
     arrange(SampleDate)
   
@@ -297,6 +314,7 @@ for (param in params) {
     plot_param_short  <- tmp$Parameter[1]
     
     param_plot <- ggplot(tmp, aes(x = turb, y = MeasureValue)) +
+      ggtheme_plot() +
       geom_point(aes(color = place_name), alpha = .5) +
       stat_smooth(method = 'lm', color = 'grey20', size = .5) +
       labs(title = tools::toTitleCase(param),
@@ -305,7 +323,8 @@ for (param in params) {
     
     print(param_plot)
   }
-  cat(sprintf('<br>%s vs Turbidity:<br>  R^2^ = %.4f<hr>', param, mdl_R$adj.r.squared))
+  cat(sprintf('<br>%s vs Turbidity:<br>  R^2^ = %.4f<hr>', 
+              param, mdl_R$adj.r.squared))
 
 }
 ```

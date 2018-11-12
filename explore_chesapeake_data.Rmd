@@ -1,23 +1,26 @@
 ---
-title: 'Chesapeake Bay Project'
-author: "*Compiled on `r date()` by `r Sys.info()['user']`*"
-output: 
+title: "Chesapeake Bay Project"
+author: '*Compiled on `r date()` by `r Sys.info()["user"]`*'
+output:
+  pdf_document:
+    toc: yes
+  word_document:
+    toc: yes
+    toc_depth: '3'
   html_document:
     code_folding: hide
-    toc: true
+    highlight: haddock
+    number_sections: yes
+    theme: cerulean
+    toc: yes
     toc_depth: 3
     toc_float: yes
-    number_sections: true
-    theme: cerulean
-    highlight: haddock
-  pdf_document:
-    toc: true
 ---
 
-``` {r setup, echo = TRUE, message = FALSE, warning = FALSE}
+``` {r setup, echo = FALSE, message = FALSE, warning = FALSE}
 
 knitr::opts_chunk$set(fig.width = 6, fig.height = 4, fig.path = 'Figs/',
-                      echo = TRUE, message = FALSE, warning = FALSE)
+                      echo = FALSE, message = FALSE, warning = FALSE)
 
 library(tidyverse)
 library(RColorBrewer)
@@ -29,8 +32,11 @@ options(stringsAsFactors = FALSE) ### Ensure strings come in as character types
 ### generic theme for all plots
 ggtheme_plot <- function(base_size = 9) {
   theme(axis.ticks = element_blank(),
-               text             = element_text(family = 'Helvetica', color = 'gray30', size = base_size),
-               plot.title       = element_text(size = rel(1.25), hjust = 0, face = 'bold'),
+               text             = element_text(family = 'Helvetica', 
+                                               color = 'gray30', 
+                                               size = base_size),
+               plot.title       = element_text(size = rel(1.25), hjust = 0, 
+                                               face = 'bold'),
                panel.background = element_blank(),
                legend.position  = 'right',
                panel.border     = element_blank(),
@@ -38,7 +44,8 @@ ggtheme_plot <- function(base_size = 9) {
                panel.grid.major = element_line(colour = 'grey90', size = .25),
                # panel.grid.major = element_blank(),
                legend.key       = element_rect(colour = NA, fill = NA),
-               axis.line        = element_blank()) # element_line(colour = "grey30", size = .5))
+               axis.line        = element_blank()) 
+  # element_line(colour = "grey30", size = .5))
 }
 
 ```
@@ -68,7 +75,7 @@ API notes: http://data.chesapeakebay.net/API
 
 ### FIPS codes for Virginia, Maryland, Delaware, and DC
 
-``` {r get_fips}
+``` {r get_fips, eval = FALSE}
 
 fips_df <- read_csv('https://transition.fcc.gov/oet/info/maps/census/fips/fips.txt', 
               skip = 16, col_names = FALSE) %>%
@@ -182,7 +189,7 @@ http://data.chesapeakebay.net/api.CSV/WaterQuality/WaterQuality/1-1-2007/6-3-201
 Parse this out into codes for FIPS IDs and substance IDs
 -->
 
-``` {r get_dataset}
+``` {r get_dataset, eval = FALSE}
 
 fips_check <- c('dc'               = 11001, 
                 'fairfax county'   = 51059, 
@@ -197,25 +204,25 @@ fips_check <- c('dc'               = 11001,
 x <- read_csv('data/water_qual_local.csv')
 
 # names(x)
-#  [1] "FIPS"                "EventId"             "Cruise"              "Program"            
-#  [5] "Project"             "Agency"              "Source"              "Station"            
-#  [9] "SampleDate"          "SampleTime"          "TotalDepth"          "UpperPycnocline"    
-# [13] "LowerPycnocline"     "Depth"               "Layer"               "SampleType"         
-# [17] "SampleReplicateType" "Parameter"           "Qualifier"           "MeasureValue"       
-# [21] "Unit"                "Method"              "Lab"                 "Problem"            
-# [25] "PrecisionPC"         "BiasPC"              "Details"             "Latitude"           
+#  [1] "FIPS"                "EventId"        "Cruise"         "Program"            
+#  [5] "Project"             "Agency"         "Source"         "Station"            
+#  [9] "SampleDate"          "SampleTime"     "TotalDepth"     "UpperPycnocline"    
+# [13] "LowerPycnocline"     "Depth"          "Layer"          "SampleType"         
+# [17] "SampleReplicateType" "Parameter"      "Qualifier"      "MeasureValue"       
+# [21] "Unit"                "Method"         "Lab"            "Problem"            
+# [25] "PrecisionPC"         "BiasPC"         "Details"        "Latitude"           
 # [29] "Longitude"
 
 # x$Parameter %>% unique()
 
-#  [1] "BOD5W"     "CHLA"      "CLW"       "DIN"       "DO"        "DOC"       "DON"      
-#  [8] "DOP"       "FCOLI_M"   "FLOW_INS"  "HARDNESS"  "KD"        "NH4F"      "NO23F"    
-# [15] "NO2F"      "NO3F"      "PC"        "PH"        "PHEO"      "PIP"       "PN"       
-# [22] "PO4F"      "PP"        "SALINITY"  "SECCHI"    "SIF"       "SIGMA_T"   "SO4W"     
-# [29] "SPCOND"    "SSC_%FINE" "SSC_TOTAL" "TALK"      "TCOLI_M"   "TDN"       "TDP"      
-# [36] "TN"        "TON"       "TP"        "TSS"       "TURB_FNU"  "TURB_NTU"  "VSS"      
-# [43] "WTEMP"     "FSS"       "PIC"       "POC"       "TDS"       "TKNW"      "TOC"      
-# [50] "TURB_NTRU" "FCOLI_C"   "NH4W"      "NO23W"     "NO2W"      "NO3W"      "PO4W"     
+#  [1] "BOD5W"     "CHLA"      "CLW"      "DIN"      "DO"      "DOC"     "DON"      
+#  [8] "DOP"       "FCOLI_M"   "FLOW_INS" "HARDNESS" "KD"      "NH4F"    "NO23F"    
+# [15] "NO2F"      "NO3F"      "PC"       "PH"       "PHEO"    "PIP"     "PN"       
+# [22] "PO4F"      "PP"        "SALINITY" "SECCHI"   "SIF"     "SIGMA_T" "SO4W"     
+# [29] "SPCOND"    "SSC_%FINE" "SSC_TOTAL""TALK"     "TCOLI_M" "TDN"     "TDP"      
+# [36] "TN"        "TON"       "TP"       "TSS"      "TURB_FNU""TURB_NTU""VSS"      
+# [43] "WTEMP"     "FSS"       "PIC"      "POC"      "TDS"     "TKNW"    "TOC"      
+# [50] "TURB_NTRU" "FCOLI_C"   "NH4W"     "NO23W"    "NO2W"    "NO3W"    "PO4W"     
 # [57] "SSC_FINE"  "SSC_SAND" 
 
 y <- x %>%
@@ -236,7 +243,7 @@ y$Parameter %>% table()
 
 Some helpful documentation on translating parameter codes: http://www.chesapeakebay.net/documents/3676/cbwqdb2004_rb.pdf
 
-``` {r get_params}
+``` {r get_params, eval = FALSE}
 
 x <- read_csv('data/water_qual_local.csv')
 
@@ -312,7 +319,7 @@ All the parameters in this area:
 
 # Plots of parameters vs time
 
-``` {r plot_plots_vs_time}
+``` {r plot_plots_vs_time, results = 'asis'}
 
 z <- read_csv('data/water_qual_student.csv')
 
@@ -327,12 +334,14 @@ for (param in params) {
   plot_param_short  <- tmp$Parameter[1]
   
   param_plot <- ggplot(tmp, aes(x = SampleDate, y = MeasureValue, color = place_name)) +
+    ggtheme_plot() +
     geom_point(alpha = .5) +
     labs(title = tools::toTitleCase(param),
          y = paste0(plot_param_short, ' (', plot_units, ')'),
          x = 'sample date')
   
   print(param_plot)
+  cat('\n\n')
 }
 ```
 
